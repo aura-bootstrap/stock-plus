@@ -12,3 +12,4 @@ vendor/**
 go-build*
 warehouse
 **/__debug_bin*.exe
+*.exe
