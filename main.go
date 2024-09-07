@@ -217,8 +217,6 @@ func processStock(stock Stock) {
 		} else {
 			logWithTimestamp(fmt.Sprintf("请求失败，message: %s", decodedMessage))
 		}
-
-		time.Sleep(1 * time.Second)
 	}
 }
 
