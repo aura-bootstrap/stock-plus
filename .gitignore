@@ -1,0 +1,14 @@
+**/__debug_bin
+**/__debug_bin.exe
+.idea
+vendor/**
+*.log
+*.test
+*.pprof
+*.pid
+.metals
+.devcontainer/devcontainer.json
+.aws-sam
+go-build*
+warehouse
+**/__debug_bin*.exe
