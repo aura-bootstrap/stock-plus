@@ -24,6 +24,8 @@ func (f *CheckPingFunction) String() string {
 }
 
 func (f *CheckPingFunction) Main(input <-chan string, output chan<- string) {
+	f.output.Reset()
+
 	defer func() {
 		output <- f.output.String()
 	}()

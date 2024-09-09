@@ -11,22 +11,15 @@ var currentHandler telegram.MessageHandler
 
 func BootHandler(text string, sender telegram.MessageSender) {
 	if strings.HasPrefix(text, "/") {
-		if currentHandler == nil {
-			handler := GetHandler(text[1:])
-			if handler == nil {
-				sender("Please input a valid mode.")
-				return
-			}
-
-			currentHandler = handler
-			sender(fmt.Sprintf("Enter %s mode.", text))
-
-			currentHandler(text, sender)
+		handler := GetHandler(text[1:])
+		if handler == nil {
+			sender("Please input a valid mode.")
 			return
 		}
+
+		currentHandler = handler
+		sender(fmt.Sprintf("Enter %s mode.", text))
 	}
 
 	currentHandler(text, sender)
-
-	return
 }

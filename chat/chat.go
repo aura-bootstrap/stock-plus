@@ -9,7 +9,7 @@ var bot *ChatBot
 
 func init() {
 	handler.Register("chat", func(text string, sender telegram.MessageSender) {
-		if bot == nil && text == "/chat" {
+		if text == "/chat" {
 			bot = NewChatBot(sender)
 			return
 		}
