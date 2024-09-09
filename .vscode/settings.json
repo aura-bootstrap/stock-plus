@@ -105,29 +105,7 @@
         "warehouse": true
     },
     "runOnSave.statusMessageTimeout": 3000,
-    "runOnSave.commands": [
-        {
-            "match": "\\.yml$",
-            "command": "Pushd ${workspaceFolder} && ${workspaceFolder}\\bin\\go-bindata -nometadata -pkg ${fileDirnameRelative} -prefix=${workspaceFolder} -o=${fileDirname}/${fileBasenameNoExtension}.yml.go ${file}",
-            "runIn": "backend",
-            "runningStatusMessage": "Compiling ${file}",
-            "finishStatusMessage": "${file} compiled"
-        },
-        {
-            "match": "geoip.yaml",
-            "command": "Pushd ${workspaceFolder} && ${workspaceFolder}\\bin\\go-bindata -nometadata -pkg ${fileDirnameRelative} -prefix=${workspaceFolder} -o=${fileDirname}/${fileDirnameRelative}.yml.go ${fileDirname}/mmdb/GeoIP-ISP.mmdb ${fileDirname}/mmdb/GeoLite2-Country.mmdb ${file}",
-            "runIn": "backend",
-            "runningStatusMessage": "Compiling ${file}",
-            "finishStatusMessage": "${file} compiled"
-        },
-        {
-            "match": "\\.proto$",
-            "command": "Pushd ${workspaceFolder} && ${workspaceFolder}\\bin\\protoc --proto_path=${workspaceFolder} --go_out=${workspaceFolder} --go_opt=plugins=grpc,paths=source_relative ${file} && ${workspaceFolder}\\bin\\protoc-go-inject-tag -input=${fileDirname}/${fileBasenameNoExtension}.pb.go",
-            "runIn": "backend",
-            "runningStatusMessage": "Compiling ${file}",
-            "finishStatusMessage": "${file} compiled"
-        }
-    ],
+    "runOnSave.commands": [],
     "prettier.printWidth": 160, // 超过最大值换行
     "prettier.tabWidth": 4, // 缩进字节数
     "prettier.useTabs": false, // 缩进不使用tab，使用空格

@@ -6,6 +6,7 @@ require (
 	github.com/deatil/go-cryptobin v1.0.4005
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	golang.org/x/net v0.29.0
+	golang.org/x/text v0.18.0
 )
 
 require (
