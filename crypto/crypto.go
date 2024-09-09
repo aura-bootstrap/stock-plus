@@ -1,8 +1,7 @@
 package crypto
 
 import (
-	"os"
-
+	"github.com/bootstrap-library/stock-plus/env"
 	"github.com/deatil/go-cryptobin/cryptobin/crypto"
 )
 
@@ -12,7 +11,7 @@ import (
 var key string
 
 func init() {
-	key = os.Getenv("PASSWORD")
+	key = env.String("PASSWORD")
 	if key == "" {
 		panic("env PASSWORD is required")
 	}

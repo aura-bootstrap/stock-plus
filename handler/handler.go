@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bootstrap-library/stock-plus/telegram"
 )
@@ -9,19 +10,23 @@ import (
 var currentHandler telegram.MessageHandler
 
 func BootHandler(text string, sender telegram.MessageSender) {
-	if text == "boot" {
-		currentHandler = nil
-		sender("I'm Bootstrap Bot, please input a mode")
-		return
+	if strings.HasPrefix(text, "/") {
+		if currentHandler == nil {
+			handler := GetHandler(text[1:])
+			if handler == nil {
+				sender("Please input a valid mode.")
+				return
+			}
+
+			currentHandler = handler
+			sender(fmt.Sprintf("Enter %s mode.", text))
+
+			currentHandler(text, sender)
+			return
+		}
 	}
 
-	handler := GetHandler(text)
-	if handler == nil {
-		sender("Please input a valid mode")
-		return
-	}
+	currentHandler(text, sender)
 
-	currentHandler = handler
-	sender(fmt.Sprintf("Enter [%s] mode", text))
 	return
 }

@@ -2,7 +2,7 @@ package handler
 
 import "github.com/bootstrap-library/stock-plus/telegram"
 
-var Handlers map[string]telegram.MessageHandler
+var Handlers = make(map[string]telegram.MessageHandler)
 
 func Register(mode string, handler telegram.MessageHandler) {
 	Handlers[mode] = handler
