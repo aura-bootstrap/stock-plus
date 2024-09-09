@@ -30,7 +30,7 @@ func (f *CheckPingFunction) Main(input <-chan string, output chan<- string) {
 		output <- f.output.String()
 	}()
 
-	host := "61.144.239.92"
+	host := "61.144.233.92"
 	cmdOutput, err := f.ping(host)
 	if err != nil {
 		f.Output(fmt.Sprintf("执行 ping 命令失败: %v\n", err))
