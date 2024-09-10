@@ -12,17 +12,25 @@ import (
 	"time"
 )
 
+type NightMarketCommissionFunction struct {
+	input  <-chan string
+	output chan<- string
+}
+
 type Stock struct {
 	ID     string
 	Price  float64
 	Amount int
 }
 
-func main() {
-	targetTime := getTargetTimeFromUser()
-	stocks := getStocksFromUser()
+func (f *NightMarketCommissionFunction) Main(input <-chan string, output chan<- string) {
+	f.input = input
+	f.output = output
 
-	waitUntilTargetTime(targetTime, stocks)
+	targetTime := f.getTime()
+	stocks := f.getStock()
+
+	f.waitUntilTargetTime(targetTime, stock)
 
 	for _, stock := range stocks {
 		processStock(stock)
@@ -32,112 +40,43 @@ func main() {
 	bufio.NewReader(os.Stdin).ReadString('\n')
 }
 
-func getStocksFromUser() []Stock {
-	reader := bufio.NewReader(os.Stdin)
-	var stocks []Stock
-
+func (f *NightMarketCommissionFunction) getTime() time.Time {
 	for {
-		fmt.Println("请输入股票代码：")
-		stockID, _ := reader.ReadString('\n')
-		stockID = strings.TrimSpace(stockID)
-
-		fmt.Println("请输入股票价格：")
-		priceStr, _ := reader.ReadString('\n')
-		price, _ := strconv.ParseFloat(strings.TrimSpace(priceStr), 64)
-
-		fmt.Println("请输入股票数量：")
-		quantityStr, _ := reader.ReadString('\n')
-		quantity, _ := strconv.Atoi(strings.TrimSpace(quantityStr))
-
-		stocks = append(stocks, Stock{ID: stockID, Price: price, Amount: quantity})
-
-		fmt.Println("是否输入下一只股票？(y/n)：")
-		next, _ := reader.ReadString('\n')
-		next = strings.TrimSpace(next)
-		if strings.ToLower(next) != "y" {
-			break
-		}
-	}
-
-	return stocks
-}
-
-func getTargetTimeFromUser() time.Time {
-	reader := bufio.NewReader(os.Stdin)
-	var year, month, day, hour, minute, second, millisecond int
-	var err error
-
-	for {
-		fmt.Println("请输入年份（格式：YYYY）：")
-		yearStr, _ := reader.ReadString('\n')
-		year, err = strconv.Atoi(strings.TrimSpace(yearStr))
+		f.output <- "请输入目标时间 (格式: 15:04:05.000)："
+		text := <-f.input
+		tm, err := time.Parse("15:04:05.000", text)
 		if err != nil {
-			fmt.Println("年份格式不正确，请重新输入。")
+			f.output <- "时间格式不正确, 请重新输入"
 			continue
 		}
-
-		fmt.Println("请输入月份（格式：MM）：")
-		monthStr, _ := reader.ReadString('\n')
-		month, err = strconv.Atoi(strings.TrimSpace(monthStr))
-		if err != nil {
-			fmt.Println("月份格式不正确，请重新输入。")
-			continue
-		}
-
-		fmt.Println("请输入日期（格式：DD）：")
-		dayStr, _ := reader.ReadString('\n')
-		day, err = strconv.Atoi(strings.TrimSpace(dayStr))
-		if err != nil {
-			fmt.Println("日期格式不正确，请重新输入。")
-			continue
-		}
-
-		fmt.Println("请输入小时（格式：HH）：")
-		hourStr, _ := reader.ReadString('\n')
-		hour, err = strconv.Atoi(strings.TrimSpace(hourStr))
-		if err != nil {
-			fmt.Println("小时格式不正确，请重新输入。")
-			continue
-		}
-
-		fmt.Println("请输入分钟（格式：MM）：")
-		minuteStr, _ := reader.ReadString('\n')
-		minute, err = strconv.Atoi(strings.TrimSpace(minuteStr))
-		if err != nil {
-			fmt.Println("分钟格式不正确，请重新输入。")
-			continue
-		}
-
-		fmt.Println("请输入秒（格式：SS）：")
-		secondStr, _ := reader.ReadString('\n')
-		second, err = strconv.Atoi(strings.TrimSpace(secondStr))
-		if err != nil {
-			fmt.Println("秒格式不正确，请重新输入。")
-			continue
-		}
-
-		fmt.Println("请输入毫秒（格式：SSS）：")
-		millisecondStr, _ := reader.ReadString('\n')
-		millisecond, err = strconv.Atoi(strings.TrimSpace(millisecondStr))
-		if err != nil {
-			fmt.Println("毫秒格式不正确，请重新输入。")
-			continue
-		}
-
-		targetTime := time.Date(year, time.Month(month), day, hour, minute, second, millisecond*1e6, time.Local)
-
-		fmt.Printf("您输入的目标时间是：%s，是否确认？(y/n)：", targetTime.Format("2006-01-02 15:04:05.000"))
-		confirmation, _ := reader.ReadString('\n')
-		confirmation = strings.TrimSpace(confirmation)
-		if strings.ToLower(confirmation) == "y" {
-			return targetTime
-		} else {
-			fmt.Println("请重新输入目标时间。")
-		}
+		return tm
 	}
 }
 
-func waitUntilTargetTime(targetTime time.Time, stocks []Stock) {
+func (f *NightMarketCommissionFunction) getStock() Stock {
+	for {
+		f.output <- "请输入股票信息 (格式: 股票代码,价格,数量)："
+		text := <-f.input
+		parts := strings.Split(text, ",")
+		if len(parts) != 3 {
+			f.output <- "股票信息格式不正确, 请重新输入"
+			continue
+		}
+		price, err := strconv.ParseFloat(parts[1], 64)
+		if err != nil {
+			f.output <- "价格格式不正确, 请重新输入"
+			continue
+		}
+		amount, err := strconv.Atoi(parts[2])
+		if err != nil {
+			f.output <- "数量格式不正确, 请重新输入"
+			continue
+		}
+		return Stock{ID: parts[0], Price: price, Amount: amount}
+	}
+}
+
+func (f *NightMarketCommissionFunction) waitUntilTargetTime(targetTime time.Time, stocks Stock) {
 	logWithTimestamp(fmt.Sprintf("等待时间到达: %v", targetTime))
 	timeUntilTarget := time.Until(targetTime)
 
