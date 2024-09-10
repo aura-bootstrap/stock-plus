@@ -21,7 +21,7 @@ func init() {
 type State interface {
 	String() string
 	EnterState() string
-	HandleInput(input string) (State, string)
+	HandleInput(input string, sender telegram.MessageSender) State
 	LeaveState() string
 }
 
@@ -40,10 +40,7 @@ func NewChatBot(sender telegram.MessageSender) *ChatBot {
 }
 
 func (c *ChatBot) Handle(input string) {
-	newState, output := c.currentState.HandleInput(input)
-	if output != "" {
-		c.sender(output)
-	}
+	newState := c.currentState.HandleInput(input, c.sender)
 	if newState != nil && newState.String() != c.currentState.String() {
 		c.ChangeState(newState)
 	}

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/bootstrap-library/stock-plus/function"
+	"github.com/bootstrap-library/stock-plus/telegram"
 )
 
 type MenuState struct{}
@@ -24,14 +25,16 @@ func (s *MenuState) EnterState() string {
 	return b.String()
 }
 
-func (s *MenuState) HandleInput(input string) (State, string) {
+func (s *MenuState) HandleInput(input string, sender telegram.MessageSender) State {
 	i, _ := strconv.Atoi(input)
 	item := menu.GetItem(i - 1)
 	if item == nil {
-		return s, "无效的选项"
+		sender("无效的选项")
+		return s
 	}
 
-	return NewFunctionState(item.Function), item.Name
+	sender(fmt.Sprintf("正在运行：%s", item.Name))
+	return NewFunctionState(item.Function)
 }
 
 func (s *MenuState) LeaveState() string {

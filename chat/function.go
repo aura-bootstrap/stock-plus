@@ -1,6 +1,9 @@
 package chat
 
-import "github.com/bootstrap-library/stock-plus/function"
+import (
+	"github.com/bootstrap-library/stock-plus/function"
+	"github.com/bootstrap-library/stock-plus/telegram"
+)
 
 type FunctionState struct {
 	function.Function
@@ -23,11 +26,17 @@ func (s *FunctionState) String() string {
 
 func (s *FunctionState) EnterState() string {
 	go func() {
+		defer recover()
 		for text := range s.output {
 			bot.sender(text)
 		}
 	}()
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				s.sender("程序发生错误，请稍后再试")
+			}
+		}()
 		defer close(s.output)
 		s.Function.Main(s.input, s.output)
 	}()
@@ -35,9 +44,9 @@ func (s *FunctionState) EnterState() string {
 	return ""
 }
 
-func (s *FunctionState) HandleInput(input string) (State, string) {
+func (s *FunctionState) HandleInput(input string, sender telegram.MessageSender) State {
 	s.input <- input
-	return s, ""
+	return s
 }
 
 func (s *FunctionState) LeaveState() string {
