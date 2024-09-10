@@ -67,11 +67,15 @@ func (m *Menu) GetItem(id int) *MenuItem {
 
 func init() {
 	menu.Register(&MenuItem{
+		Name:            "定时隔夜单",
+		FunctionCreator: stock.NewNightMarketCommissionFunction,
+	})
+	menu.Register(&MenuItem{
 		Name:            "检查Ping延迟",
 		FunctionCreator: net.NewCheckPingFunction,
 	})
 	menu.Register(&MenuItem{
-		Name:            "定时隔夜单",
-		FunctionCreator: stock.NewNightMarketCommissionFunction,
+		Name:            "检查系统时间",
+		FunctionCreator: net.NewCheckSystimeFunction,
 	})
 }
