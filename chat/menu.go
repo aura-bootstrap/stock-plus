@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/bootstrap-library/stock-plus/function"
+	"github.com/bootstrap-library/stock-plus/net"
 	"github.com/bootstrap-library/stock-plus/telegram"
 )
 
@@ -34,7 +35,7 @@ func (s *MenuState) HandleInput(input string, sender telegram.MessageSender) Sta
 	}
 
 	sender(fmt.Sprintf("正在运行：%s", item.Name))
-	return NewFunctionState(item.Function)
+	return NewFunctionState(item.FunctionCreator())
 }
 
 func (s *MenuState) LeaveState() string {
@@ -46,8 +47,8 @@ type Menu struct {
 }
 
 type MenuItem struct {
-	Name     string
-	Function function.Function
+	Name            string
+	FunctionCreator func() function.Function
 }
 
 var menu = &Menu{}
@@ -65,7 +66,7 @@ func (m *Menu) GetItem(id int) *MenuItem {
 
 func init() {
 	menu.Register(&MenuItem{
-		Name:     "检查Ping延迟",
-		Function: &function.CheckPingFunction{},
+		Name:            "检查Ping延迟",
+		FunctionCreator: net.NewCheckPingFunction,
 	})
 }

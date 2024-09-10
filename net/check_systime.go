@@ -1,4 +1,4 @@
-package function
+package net
 
 import (
 	"bytes"

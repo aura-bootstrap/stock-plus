@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"log"
+
 	"github.com/bootstrap-library/stock-plus/function"
 	"github.com/bootstrap-library/stock-plus/telegram"
 )
@@ -15,8 +17,8 @@ type FunctionState struct {
 func NewFunctionState(f function.Function) *FunctionState {
 	return &FunctionState{
 		Function: f,
-		input:    make(chan string),
-		output:   make(chan string),
+		input:    make(chan string, 100),
+		output:   make(chan string, 100),
 	}
 }
 
@@ -28,6 +30,7 @@ func (s *FunctionState) EnterState() string {
 	go func() {
 		defer recover()
 		for text := range s.output {
+			log.Println(text)
 			bot.sender(text)
 		}
 	}()

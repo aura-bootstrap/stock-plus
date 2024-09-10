@@ -1,22 +1,26 @@
-package function
+package net
 
 import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/bootstrap-library/stock-plus/function"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 )
 
 type CheckPingFunction struct {
-	output bytes.Buffer
+	outputBuffer bytes.Buffer
+}
+
+func NewCheckPingFunction() function.Function {
+	return &CheckPingFunction{}
 }
 
 func (f *CheckPingFunction) String() string {
@@ -24,10 +28,10 @@ func (f *CheckPingFunction) String() string {
 }
 
 func (f *CheckPingFunction) Main(input <-chan string, output chan<- string) {
-	f.output.Reset()
+	f.outputBuffer.Reset()
 
 	defer func() {
-		output <- f.output.String()
+		output <- f.outputBuffer.String()
 	}()
 
 	host := "61.144.233.92"
@@ -53,8 +57,7 @@ func (f *CheckPingFunction) Main(input <-chan string, output chan<- string) {
 }
 
 func (f *CheckPingFunction) Output(s string) {
-	log.Printf(s)
-	f.output.WriteString(s)
+	f.outputBuffer.WriteString(s)
 }
 
 // 执行 ping 命令
