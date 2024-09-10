@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -24,7 +25,7 @@ func NewCheckPingFunction() function.Function {
 }
 
 func (f *CheckPingFunction) String() string {
-	return "CheckPingFunction"
+	return reflect.TypeOf(f).Name()
 }
 
 func (f *CheckPingFunction) Main(input <-chan string, output chan<- string) {

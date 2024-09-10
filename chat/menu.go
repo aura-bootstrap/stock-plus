@@ -7,6 +7,7 @@ import (
 
 	"github.com/bootstrap-library/stock-plus/function"
 	"github.com/bootstrap-library/stock-plus/net"
+	"github.com/bootstrap-library/stock-plus/stock"
 	"github.com/bootstrap-library/stock-plus/telegram"
 )
 
@@ -68,5 +69,9 @@ func init() {
 	menu.Register(&MenuItem{
 		Name:            "检查Ping延迟",
 		FunctionCreator: net.NewCheckPingFunction,
+	})
+	menu.Register(&MenuItem{
+		Name:            "定时隔夜单",
+		FunctionCreator: stock.NewNightMarketCommissionFunction,
 	})
 }

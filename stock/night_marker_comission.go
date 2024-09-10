@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bootstrap-library/stock-plus/function"
 )
 
 type NightMarketCommissionFunction struct {
@@ -17,10 +20,18 @@ type NightMarketCommissionFunction struct {
 	stock  Stock
 }
 
+func NewNightMarketCommissionFunction() function.Function {
+	return &NightMarketCommissionFunction{}
+}
+
 type Stock struct {
 	ID     string
 	Price  float64
 	Amount int
+}
+
+func (f *NightMarketCommissionFunction) String() string {
+	return reflect.TypeOf(f).Name()
 }
 
 func (f *NightMarketCommissionFunction) Main(input <-chan string, output chan<- string) {
@@ -40,36 +51,50 @@ func (f *NightMarketCommissionFunction) Main(input <-chan string, output chan<- 
 
 func (f *NightMarketCommissionFunction) getTime() time.Time {
 	for {
-		f.output <- "请输入目标时间 (格式: 15:04:05.000)："
+		f.printf("请输入目标时间 (格式: hh:mm, 毫秒偏差)：")
 		text := <-f.input
-		tm, err := time.Parse("15:04:05.000", text)
-		if err != nil {
-			f.output <- "时间格式不正确, 请重新输入"
+		parts := strings.Split(text, ",")
+		if len(parts) != 2 {
+			f.printf("时间格式不正确, 请重新输入")
 			continue
 		}
+		tmText := time.Now().Format("2006-01-02") + " " + parts[0] + ":00"
+		tm, err := time.Parse("2006-01-02 15:04:05", tmText)
+		if err != nil {
+			f.printf("时间格式不正确, 请重新输入")
+			continue
+		}
+		offset, err := strconv.ParseFloat(parts[1], 64)
+		if err != nil {
+			f.printf("毫秒偏差格式不正确, 请重新输入")
+			continue
+		}
+		tm = tm.Add(time.Duration(offset) * time.Millisecond)
+		f.printf("目标时间: %v", tm)
 		return tm
 	}
 }
 
 func (f *NightMarketCommissionFunction) getStock() Stock {
 	for {
-		f.output <- "请输入股票信息 (格式: 股票代码,价格,数量)："
+		f.printf("请输入股票信息 (格式: 股票代码,价格,数量)：")
 		text := <-f.input
 		parts := strings.Split(text, ",")
 		if len(parts) != 3 {
-			f.output <- "股票信息格式不正确, 请重新输入"
+			f.printf("股票信息格式不正确, 请重新输入")
 			continue
 		}
 		price, err := strconv.ParseFloat(parts[1], 64)
 		if err != nil {
-			f.output <- "价格格式不正确, 请重新输入"
+			f.printf("价格格式不正确, 请重新输入")
 			continue
 		}
 		amount, err := strconv.Atoi(parts[2])
 		if err != nil {
-			f.output <- "数量格式不正确, 请重新输入"
+			f.printf("数量格式不正确, 请重新输入")
 			continue
 		}
+		f.printf("股票信息: %s, 价格: %.2f, 数量: %d", parts[0], price, amount)
 		return Stock{ID: parts[0], Price: price, Amount: amount}
 	}
 }
@@ -154,6 +179,6 @@ func (f *NightMarketCommissionFunction) process() {
 }
 
 func (f *NightMarketCommissionFunction) printf(format string, args ...any) {
-	text := fmt.Sprintf("%s %s\n", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, args...))
+	text := fmt.Sprintf("[%s] %s\n", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, args...))
 	f.output <- text
 }
