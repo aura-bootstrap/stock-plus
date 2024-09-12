@@ -38,10 +38,13 @@ func ClickMouse(hwnd syscall.Handle) {
 	user32.PostMessageA(hwnd, user32.WM_LBUTTONUP, user32.MK_LBUTTON, 0)
 }
 
+// https://www.eolink.com/news/post/1063.html
+
 func InputText(hwnd syscall.Handle, text string) {
 	for _, r := range text {
 		utf16Chars := utf16.Encode([]rune{r})
 		for _, char := range utf16Chars {
+			// PostMessage(hwnd, WM_LBUTTONDOWN, 0,mX + mY * 65536)。
 			user32.PostMessageA(hwnd, user32.WM_KEYDOWN, uintptr(char), 0)
 			user32.PostMessageA(hwnd, user32.WM_KEYUP, uintptr(char), 0)
 		}
