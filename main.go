@@ -20,23 +20,35 @@ type Stock struct {
 
 func main() {
 	targetTime := getTargetTimeFromUser()
-	stocks := getStocksFromUser()
+	stock := getStockFromUser()
+	maxRetries := getMaxRetriesFromUser()
 
-	waitUntilTargetTime(targetTime, stocks)
+	waitUntilTargetTime(targetTime, stock)
 
-	for _, stock := range stocks {
-		processStock(stock)
-	}
+	processStock(stock, maxRetries)
 
 	fmt.Println("按回车键退出...")
 	bufio.NewReader(os.Stdin).ReadString('\n')
 }
 
-func getStocksFromUser() []Stock {
+func getMaxRetriesFromUser() int {
 	reader := bufio.NewReader(os.Stdin)
-	var stocks []Stock
-
 	for {
+		fmt.Println("请输入最大重试次数：")
+		retriesStr, _ := reader.ReadString('\n')
+		retries, err := strconv.Atoi(strings.TrimSpace(retriesStr))
+		if err != nil {
+			fmt.Println("重试次数格式不正确，请重新输入。")
+			continue
+		}
+		return retries
+	}
+}
+
+func getStockFromUser() Stock {
+	for {
+		reader := bufio.NewReader(os.Stdin)
+
 		fmt.Println("请输入股票代码：")
 		stockID, _ := reader.ReadString('\n')
 		stockID = strings.TrimSpace(stockID)
@@ -49,22 +61,25 @@ func getStocksFromUser() []Stock {
 		quantityStr, _ := reader.ReadString('\n')
 		quantity, _ := strconv.Atoi(strings.TrimSpace(quantityStr))
 
-		stocks = append(stocks, Stock{ID: stockID, Price: price, Amount: quantity})
-
-		fmt.Println("是否输入下一只股票？(y/n)：")
-		next, _ := reader.ReadString('\n')
-		next = strings.TrimSpace(next)
-		if strings.ToLower(next) != "y" {
-			break
+		fmt.Println("您输入的股票信息如下：")
+		fmt.Printf("股票代码：%s\n", stockID)
+		fmt.Printf("股票价格：%.2f\n", price)
+		fmt.Printf("股票数量：%d\n", quantity)
+		fmt.Println("是否确认？(y/n)：")
+		confirmation, _ := reader.ReadString('\n')
+		confirmation = strings.TrimSpace(confirmation)
+		if strings.ToLower(confirmation) != "y" {
+			fmt.Println("请重新输入股票信息。")
+			continue
 		}
-	}
 
-	return stocks
+		return Stock{ID: stockID, Price: price, Amount: quantity}
+	}
 }
 
 func getTargetTimeFromUser() time.Time {
 	reader := bufio.NewReader(os.Stdin)
-	var year, month, day, hour, minute, second, millisecond int
+	var year, month, day, hour, minute, second, microsecond int
 	var err error
 
 	for {
@@ -116,17 +131,17 @@ func getTargetTimeFromUser() time.Time {
 			continue
 		}
 
-		fmt.Println("请输入毫秒（格式：SSS）：")
-		millisecondStr, _ := reader.ReadString('\n')
-		millisecond, err = strconv.Atoi(strings.TrimSpace(millisecondStr))
+		fmt.Println("请输入微秒（格式：UUUUUU）：")
+		microsecondStr, _ := reader.ReadString('\n')
+		microsecond, err = strconv.Atoi(strings.TrimSpace(microsecondStr))
 		if err != nil {
-			fmt.Println("毫秒格式不正确，请重新输入。")
+			fmt.Println("微秒格式不正确，请重新输入。")
 			continue
 		}
 
-		targetTime := time.Date(year, time.Month(month), day, hour, minute, second, millisecond*1e6, time.Local)
+		targetTime := time.Date(year, time.Month(month), day, hour, minute, second, microsecond*1e3, time.Local)
 
-		fmt.Printf("您输入的目标时间是：%s，是否确认？(y/n)：", targetTime.Format("2006-01-02 15:04:05.000"))
+		fmt.Printf("您输入的目标时间是：%s，是否确认？(y/n)：", targetTime.Format("2006-01-02 15:04:05.000000"))
 		confirmation, _ := reader.ReadString('\n')
 		confirmation = strings.TrimSpace(confirmation)
 		if strings.ToLower(confirmation) == "y" {
@@ -137,7 +152,7 @@ func getTargetTimeFromUser() time.Time {
 	}
 }
 
-func waitUntilTargetTime(targetTime time.Time, stocks []Stock) {
+func waitUntilTargetTime(targetTime time.Time, stock Stock) {
 	logWithTimestamp(fmt.Sprintf("等待时间到达: %v", targetTime))
 	timeUntilTarget := time.Until(targetTime)
 
@@ -150,20 +165,18 @@ func waitUntilTargetTime(targetTime time.Time, stocks []Stock) {
 	<-timer.C
 
 	// 发送连通性测试请求
-	for _, stock := range stocks {
-		url := fmt.Sprintf("http://localhost:8888/buy?stock_code=%s&price=%.2f&amount=%d", stock.ID, stock.Price, stock.Amount)
-		logWithTimestamp(fmt.Sprintf("发送连通性测试请求: %s", url))
-		resp, err := http.Get(url)
+	url := fmt.Sprintf("http://localhost:8888/buy?stock_code=%s&price=%.2f&amount=%d", stock.ID, stock.Price, stock.Amount)
+	logWithTimestamp(fmt.Sprintf("发送连通性测试请求: %s", url))
+	resp, err := http.Get(url)
+	if err != nil {
+		logWithTimestamp(fmt.Sprintf("连通性测试请求失败: %v", err))
+	} else {
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			logWithTimestamp(fmt.Sprintf("连通性测试请求失败: %v", err))
+			logWithTimestamp(fmt.Sprintf("读取连通性测试响应失败: %v", err))
 		} else {
-			defer resp.Body.Close()
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				logWithTimestamp(fmt.Sprintf("读取连通性测试响应失败: %v", err))
-			} else {
-				logWithTimestamp(fmt.Sprintf("连通性测试响应内容: %s", string(body)))
-			}
+			logWithTimestamp(fmt.Sprintf("连通性测试响应内容: %s", string(body)))
 		}
 	}
 
@@ -173,9 +186,8 @@ func waitUntilTargetTime(targetTime time.Time, stocks []Stock) {
 	<-timer.C
 }
 
-func processStock(stock Stock) {
+func processStock(stock Stock, maxRetries int) {
 	url := fmt.Sprintf("http://localhost:8888/buy?stock_code=%s&price=%.2f&amount=%d", stock.ID, stock.Price, stock.Amount)
-	maxRetries := 30
 	for i := 0; i < maxRetries; i++ {
 		logWithTimestamp(fmt.Sprintf("发送请求: %s", url))
 		resp, err := http.Get(url)
@@ -221,5 +233,5 @@ func processStock(stock Stock) {
 }
 
 func logWithTimestamp(message string) {
-	fmt.Printf("%s %s\n", time.Now().Format("2006-01-02 15:04:05.000"), message)
+	fmt.Printf("%s %s\n", time.Now().Format("2006-01-02 15:04:05.000000"), message)
 }
